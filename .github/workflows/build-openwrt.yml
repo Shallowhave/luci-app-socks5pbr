@@ -16,9 +16,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        working-directory: openwrt
 
     steps:
       - name: Checkout feed repo
@@ -47,18 +44,22 @@ jobs:
           git clone --depth 1 -b ${{ env.OPENWRT_BRANCH }} ${{ env.IMMORTALWRT_URL }} openwrt
 
       - name: Add socks5pbr feed
+        working-directory: openwrt
         run: |
           echo "src-link socks5pbr $GITHUB_WORKSPACE/feed" >> feeds.conf.default
           cat feeds.conf.default
 
       - name: Update feeds
+        working-directory: openwrt
         run: ./scripts/feeds update -a
 
       - name: Install socks5pbr feed packages
+        working-directory: openwrt
         run: |
           ./scripts/feeds install -p socks5pbr socks5pbr luci-app-socks5pbr
 
       - name: Configure target (x86_64 Generic)
+        working-directory: openwrt
         run: |
           make defconfig
           for opt in CONFIG_TARGET_x86=y CONFIG_TARGET_x86_64=y CONFIG_TARGET_x86_64_Generic=y; do
@@ -69,9 +70,11 @@ jobs:
           make defconfig
 
       - name: Build socks5pbr
+        working-directory: openwrt
         run: make -j$(nproc) package/feeds/socks5pbr/socks5pbr/compile V=s
 
       - name: Build luci-app-socks5pbr
+        working-directory: openwrt
         run: make -j$(nproc) package/feeds/socks5pbr/luci-app-socks5pbr/compile V=s
 
       - name: Upload IPK artifacts
