@@ -1,5 +1,5 @@
-# Build socks5pbr + luci-app-socks5pbr with ImmortalWrt SDK (openwrt-24.10)
-# Uses pre-built SDK to avoid compiling toolchain; produces .ipk artifacts.
+# Build socks5pbr + luci-app-socks5pbr (mosdns-style: Go cross-compile + manual .ipk pack)
+# No OpenWrt SDK; produces .ipk artifacts for x86_64.
 
 name: Build OpenWrt packages
 
@@ -9,74 +9,29 @@ on:
   pull_request:
     branches: [ main, master, openwrt-24.10 ]
 
-env:
-  SDK_VERSION: "24.10.0"
-  SDK_URL: https://downloads.immortalwrt.org/releases/24.10.0/targets/x86/64/immortalwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout feed repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           path: feed
 
-      - name: Install Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
+          cache-dependency-path: feed/socks5pbr/go.sum
 
-      - name: Install SDK build deps
+      - name: Build and pack IPK
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential curl zstd
-
-      - name: Download and extract ImmortalWrt SDK
-        run: |
-          curl -sL "${{ env.SDK_URL }}" -o sdk.tar.zst
-          zstd -d -q sdk.tar.zst -o sdk.tar
-          tar -xf sdk.tar
-          mv immortalwrt-sdk-* openwrt
-
-      - name: Add socks5pbr feed
-        working-directory: openwrt
-        run: |
-          echo "src-link socks5pbr $GITHUB_WORKSPACE/feed" >> feeds.conf.default
-          cat feeds.conf.default
-
-      - name: Update feeds
-        working-directory: openwrt
-        run: ./scripts/feeds update -a
-
-      - name: Install socks5pbr feed packages
-        working-directory: openwrt
-        run: |
-          ./scripts/feeds install -p socks5pbr socks5pbr luci-app-socks5pbr
-
-      - name: Generate default config (non-interactive)
-        working-directory: openwrt
-        env:
-          TERM: dumb
-        run: make defconfig
-
-      - name: Build socks5pbr
-        working-directory: openwrt
-        env:
-          TERM: dumb
-        run: make -j$(nproc) package/feeds/socks5pbr/socks5pbr/compile V=s
-
-      - name: Build luci-app-socks5pbr
-        working-directory: openwrt
-        env:
-          TERM: dumb
-        run: make -j$(nproc) package/feeds/socks5pbr/luci-app-socks5pbr/compile V=s
+          chmod +x feed/socks5pbr/scripts/build-ipk.sh
+          cd feed && ./socks5pbr/scripts/build-ipk.sh amd64
 
       - name: Upload IPK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ipk-x86_64
-          path: |
-            openwrt/bin/**/socks5pbr*.ipk
-            openwrt/bin/**/luci-app-socks5pbr*.ipk
+          path: feed/out/*.ipk

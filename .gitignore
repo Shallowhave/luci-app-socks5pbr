@@ -2,6 +2,7 @@
 *.ipk
 openwrt/
 bin/
+out/
 
 # Go
 socks5pbr/socks5pbrd
