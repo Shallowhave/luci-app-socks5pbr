@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"os"
 	"syscall"
 	"unsafe"
 
@@ -79,9 +80,9 @@ func listenUDPTransparent(addr string) (*net.UDPConn, error) {
 		return nil, err
 	}
 
-	f := net.NewFile(uintptr(fd), "udp-transparent")
+	f := os.NewFile(uintptr(fd), "udp-transparent")
 	if f == nil {
-		return nil, errors.New("net.NewFile returned nil")
+		return nil, errors.New("os.NewFile returned nil")
 	}
 	defer f.Close()
 
@@ -216,9 +217,9 @@ func dialUDPTransparentConn(localSrc *net.UDPAddr, remote *net.UDPAddr) (*net.UD
 		return nil, err
 	}
 
-	f := net.NewFile(uintptr(fd), "udp-transparent-reply")
+	f := os.NewFile(uintptr(fd), "udp-transparent-reply")
 	if f == nil {
-		return nil, errors.New("net.NewFile returned nil")
+		return nil, errors.New("os.NewFile returned nil")
 	}
 	defer f.Close()
 	c, err := net.FileConn(f)
