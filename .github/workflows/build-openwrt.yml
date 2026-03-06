@@ -55,12 +55,22 @@ jobs:
         run: |
           ./scripts/feeds install -p socks5pbr socks5pbr luci-app-socks5pbr
 
+      - name: Generate default config (non-interactive)
+        working-directory: openwrt
+        env:
+          TERM: dumb
+        run: make defconfig
+
       - name: Build socks5pbr
         working-directory: openwrt
+        env:
+          TERM: dumb
         run: make -j$(nproc) package/feeds/socks5pbr/socks5pbr/compile V=s
 
       - name: Build luci-app-socks5pbr
         working-directory: openwrt
+        env:
+          TERM: dumb
         run: make -j$(nproc) package/feeds/socks5pbr/luci-app-socks5pbr/compile V=s
 
       - name: Upload IPK artifacts
