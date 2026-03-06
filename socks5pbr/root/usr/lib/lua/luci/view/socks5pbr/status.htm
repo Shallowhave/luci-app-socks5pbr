@@ -1,0 +1,23 @@
+<%+header%>
+
+<h2>Socks5 PBR</h2>
+<div class="cbi-section">
+  <div class="cbi-section-node">
+    <div class="cbi-value">
+      <label class="cbi-value-title">Daemon</label>
+      <div class="cbi-value-field">
+        <% if self.running then %>
+          <span style="color: #1a7f37;">running</span>
+        <% else %>
+          <span style="color: #b42318;">stopped</span>
+        <% end %>
+      </div>
+    </div>
+    <p class="cbi-section-descr">
+      Manage nodes and rules from the menu, then enable the service.
+    </p>
+  </div>
+</div>
+
+<%+footer%>
+

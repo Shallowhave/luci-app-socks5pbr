@@ -1,0 +1,83 @@
+# Build socks5pbr + luci-app-socks5pbr against ImmortalWrt openwrt-24.10
+# Uses this repo as a local feed; produces .ipk artifacts.
+
+name: Build OpenWrt packages
+
+on:
+  push:
+    branches: [ main, master, openwrt-24.10 ]
+  pull_request:
+    branches: [ main, master, openwrt-24.10 ]
+
+env:
+  OPENWRT_BRANCH: openwrt-24.10
+  IMMORTALWRT_URL: https://github.com/immortalwrt/immortalwrt.git
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: openwrt
+
+    steps:
+      - name: Checkout feed repo
+        uses: actions/checkout@v4
+        with:
+          path: feed
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install ImmortalWrt build deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+            g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+            libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libreadline-dev \
+            libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs nano ninja-build p7zip p7zip-full \
+            patch pkgconf python3 python3-pip python3-ply python3-docutils re2c rsync scons squashfs-tools \
+            subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+
+      - name: Clone ImmortalWrt
+        run: |
+          git clone --depth 1 -b ${{ env.OPENWRT_BRANCH }} ${{ env.IMMORTALWRT_URL }} openwrt
+
+      - name: Add socks5pbr feed
+        run: |
+          echo "src-link socks5pbr $GITHUB_WORKSPACE/feed" >> feeds.conf.default
+          cat feeds.conf.default
+
+      - name: Update feeds
+        run: ./scripts/feeds update -a
+
+      - name: Install socks5pbr feed packages
+        run: |
+          ./scripts/feeds install -p socks5pbr socks5pbr luci-app-socks5pbr
+
+      - name: Configure target (x86_64 Generic)
+        run: |
+          make defconfig
+          for opt in CONFIG_TARGET_x86=y CONFIG_TARGET_x86_64=y CONFIG_TARGET_x86_64_Generic=y; do
+            if ! grep -q "^${opt%=*}=" .config 2>/dev/null; then
+              echo "$opt" >> .config
+            fi
+          done
+          make defconfig
+
+      - name: Build socks5pbr
+        run: make -j$(nproc) package/feeds/socks5pbr/socks5pbr/compile V=s
+
+      - name: Build luci-app-socks5pbr
+        run: make -j$(nproc) package/feeds/socks5pbr/luci-app-socks5pbr/compile V=s
+
+      - name: Upload IPK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipk-x86_64
+          path: |
+            openwrt/bin/**/socks5pbr*.ipk
+            openwrt/bin/**/luci-app-socks5pbr*.ipk

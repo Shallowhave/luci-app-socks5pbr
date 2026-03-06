@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+USE_PROCD=1
+
+NAME="socks5pbr"
+PROG="/usr/sbin/socks5pbrd"
+
+. /lib/functions.sh
+
+MARK_BASE_HEX="0x52000000"
+TABLE_ID="100"
+
+config_load_socks5pbr() {
+	config_load socks5pbr
+	config_get_bool enabled main enabled 0
+	config_get tcp_port main tcp_port 12345
+	config_get udp_port main udp_port 12346
+	config_get_bool udp_enabled main udp_enabled 1
+	config_get log_level main log_level info
+}
+
+setup_policy_routing() {
+	# Route marked packets to local for TPROXY handling.
+	ip rule add fwmark ${MARK_BASE_HEX}/0xFFFF0000 lookup ${TABLE_ID} 2>/dev/null
+	ip route add local 0.0.0.0/0 dev lo table ${TABLE_ID} 2>/dev/null
+}
+
+teardown_policy_routing() {
+	ip rule del fwmark ${MARK_BASE_HEX}/0xFFFF0000 lookup ${TABLE_ID} 2>/dev/null
+	ip route flush table ${TABLE_ID} 2>/dev/null
+}
+
+reload_firewall() {
+	/etc/init.d/firewall reload 2>/dev/null || true
+}
+
+start_service() {
+	config_load_socks5pbr
+	[ "$enabled" -eq 1 ] || return 0
+
+	/usr/lib/socks5pbr/gen_nft.sh "$tcp_port" "$udp_port" "$udp_enabled" "$MARK_BASE_HEX" || return 1
+	setup_policy_routing
+	reload_firewall
+
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_append_param command "-tcp" ":$tcp_port"
+	procd_append_param command "-udp" ":$udp_port"
+	procd_append_param command "-log" "$log_level"
+	procd_set_param respawn 3600 5 5
+	procd_close_instance
+}
+
+stop_service() {
+	teardown_policy_routing
+	# keep nft file; firewall reload will remove if include removed manually.
+	reload_firewall
+}
+
+reload_service() {
+	stop
+	start
+}
+

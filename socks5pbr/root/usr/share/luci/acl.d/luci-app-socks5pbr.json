@@ -1,0 +1,12 @@
+{
+  "luci-app-socks5pbr": {
+    "description": "Grant access to Socks5 PBR",
+    "read": {
+      "uci": [ "socks5pbr" ]
+    },
+    "write": {
+      "uci": [ "socks5pbr" ]
+    }
+  }
+}
+

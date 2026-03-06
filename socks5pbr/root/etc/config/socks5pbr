@@ -1,0 +1,23 @@
+# /etc/config/socks5pbr - Socks5 PBR plugin configuration
+# Globals
+config globals 'main'
+	option enabled '1'
+	option tcp_port '12345'
+	option udp_port '12346'
+	option log_level 'info'
+	option udp_enabled '1'
+
+# Nodes: Socks5 servers (add via LuCI or uci)
+# config node 'hk-01'
+#	option name 'hk-01'
+#	option server '1.2.3.4'
+#	option port '1080'
+#	option username 'user'
+#	option password 'pass'
+#	option remark 'HK node'
+
+# Rules: LAN IP -> node mapping
+# config rule 'rule_192_168_1_10'
+#	option src_ip '192.168.1.10'
+#	option node 'hk-01'
+#	option enabled '1'

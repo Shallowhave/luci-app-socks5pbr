@@ -1,0 +1,53 @@
+{
+  "admin/network/socks5pbr": {
+    "title": "Socks5 PBR",
+    "order": 60,
+    "action": {
+      "type": "firstchild"
+    },
+    "depends": {
+      "acl": [ "luci-app-socks5pbr" ]
+    }
+  },
+  "admin/network/socks5pbr/status": {
+    "title": "Status",
+    "order": 10,
+    "action": {
+      "type": "cbi",
+      "path": "socks5pbr/status"
+    }
+  },
+  "admin/network/socks5pbr/settings": {
+    "title": "Settings",
+    "order": 20,
+    "action": {
+      "type": "cbi",
+      "path": "socks5pbr/settings"
+    }
+  },
+  "admin/network/socks5pbr/nodes": {
+    "title": "Nodes",
+    "order": 30,
+    "action": {
+      "type": "cbi",
+      "path": "socks5pbr/nodes"
+    }
+  },
+  "admin/network/socks5pbr/rules": {
+    "title": "Rules",
+    "order": 40,
+    "action": {
+      "type": "cbi",
+      "path": "socks5pbr/rules"
+    }
+  },
+  "admin/network/socks5pbr/import": {
+    "title": "Batch Import",
+    "order": 50,
+    "action": {
+      "type": "call",
+      "path": "socks5pbr/import"
+    }
+  }
+}
+

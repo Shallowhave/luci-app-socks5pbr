@@ -1,0 +1,13 @@
+# Build artifacts
+*.ipk
+openwrt/
+bin/
+
+# Go
+socks5pbr/socks5pbrd
+*.exe
+
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
