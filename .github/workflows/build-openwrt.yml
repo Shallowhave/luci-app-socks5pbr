@@ -1,5 +1,5 @@
-# Build socks5pbr + luci-app-socks5pbr against ImmortalWrt openwrt-24.10
-# Uses this repo as a local feed; produces .ipk artifacts.
+# Build socks5pbr + luci-app-socks5pbr with ImmortalWrt SDK (openwrt-24.10)
+# Uses pre-built SDK to avoid compiling toolchain; produces .ipk artifacts.
 
 name: Build OpenWrt packages
 
@@ -10,8 +10,8 @@ on:
     branches: [ main, master, openwrt-24.10 ]
 
 env:
-  OPENWRT_BRANCH: openwrt-24.10
-  IMMORTALWRT_URL: https://github.com/immortalwrt/immortalwrt.git
+  SDK_VERSION: "24.10.0"
+  SDK_URL: https://downloads.immortalwrt.org/releases/24.10.0/targets/x86/64/immortalwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
 
 jobs:
   build:
@@ -28,20 +28,17 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Install ImmortalWrt build deps
+      - name: Install SDK build deps
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
-            g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
-            libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libreadline-dev \
-            libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs nano ninja-build p7zip p7zip-full \
-            patch pkgconf python3 python3-pip python3-ply python3-docutils re2c rsync scons squashfs-tools \
-            subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+          sudo apt-get install -y -qq build-essential curl zstd
 
-      - name: Clone ImmortalWrt
+      - name: Download and extract ImmortalWrt SDK
         run: |
-          git clone --depth 1 -b ${{ env.OPENWRT_BRANCH }} ${{ env.IMMORTALWRT_URL }} openwrt
+          curl -sL "${{ env.SDK_URL }}" -o sdk.tar.zst
+          zstd -d -q sdk.tar.zst -o sdk.tar
+          tar -xf sdk.tar
+          mv immortalwrt-sdk-* openwrt
 
       - name: Add socks5pbr feed
         working-directory: openwrt
@@ -57,17 +54,6 @@ jobs:
         working-directory: openwrt
         run: |
           ./scripts/feeds install -p socks5pbr socks5pbr luci-app-socks5pbr
-
-      - name: Configure target (x86_64 Generic)
-        working-directory: openwrt
-        run: |
-          make defconfig
-          for opt in CONFIG_TARGET_x86=y CONFIG_TARGET_x86_64=y CONFIG_TARGET_x86_64_Generic=y; do
-            if ! grep -q "^${opt%=*}=" .config 2>/dev/null; then
-              echo "$opt" >> .config
-            fi
-          done
-          make defconfig
 
       - name: Build socks5pbr
         working-directory: openwrt
