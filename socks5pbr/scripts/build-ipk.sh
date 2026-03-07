@@ -40,9 +40,9 @@ Description: Socks5 PBR daemon (TPROXY + policy by LAN IP). Uses nftables TPROXY
 Depends: kmod-nft-tproxy
 EOF
 
-( cd "$IPK_ROOT" && tar --owner=0 --group=0 -czf "$OUT_DIR/control.socks5pbr.tar.gz" CONTROL )
+( cd "$IPK_ROOT/CONTROL" && tar --owner=0 --group=0 -czf "$OUT_DIR/control.socks5pbr.tar.gz" control )
 ( cd "$IPK_ROOT" && tar --owner=0 --group=0 -czf "$OUT_DIR/data.socks5pbr.tar.gz" usr etc )
-echo "2.0" > "$OUT_DIR/debian-binary"
+printf '2.0\n' > "$OUT_DIR/debian-binary"
 ( cd "$OUT_DIR" && ar cr "socks5pbr_${PKG_VERSION}-${PKG_RELEASE}_x86_64.ipk" debian-binary control.socks5pbr.tar.gz data.socks5pbr.tar.gz )
 rm -f "$OUT_DIR/control.socks5pbr.tar.gz" "$OUT_DIR/data.socks5pbr.tar.gz"
 rm -rf "$IPK_ROOT"
@@ -74,7 +74,7 @@ Description: LuCI for Socks5 PBR: nodes, rules, batch import, status.
 Depends: socks5pbr, luci-base
 EOF
 
-( cd "$IPK_ROOT" && tar --owner=0 --group=0 -czf "$OUT_DIR/control.luci.tar.gz" CONTROL )
+( cd "$IPK_ROOT/CONTROL" && tar --owner=0 --group=0 -czf "$OUT_DIR/control.luci.tar.gz" control )
 ( cd "$IPK_ROOT" && tar --owner=0 --group=0 -czf "$OUT_DIR/data.luci.tar.gz" usr )
 ( cd "$OUT_DIR" && ar cr "luci-app-socks5pbr_${PKG_VERSION}-${PKG_RELEASE}_all.ipk" debian-binary control.luci.tar.gz data.luci.tar.gz )
 rm -f "$OUT_DIR/control.luci.tar.gz" "$OUT_DIR/data.luci.tar.gz"
